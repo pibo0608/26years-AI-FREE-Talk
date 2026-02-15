@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowTalk 2.1 · 灵动对话 (冷却提示版)</title>
+    <style>
+        /* ----- 基础重置，确保窗口可自由缩放 ----- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: var(--font-family);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* ----- CSS 变量 (亮色/暗色 + 主题风格) ----- */
+        :root {
+            --bg-color: #f9fafc;
+            --surface-color: rgba(255,255,255,0.7);
+            --surface-blur: blur(12px);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border-light: #e2e8f0;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --user-bubble: #3b82f6;
+            --assistant-bubble: #ffffff;
+            --sidebar-bg: rgba(241,245,249,0.8);
+            --avatar-bg: #94a3b8;
+            --hover-bg: rgba(226,232,240,0.7);
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --logo-gradient: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+            --input-glow: 0 0 0 2px rgba(59,130,246,0.5);
+        }
+        .dark {
+            --bg-color: #0f172a;
+            --surface-color: rgba(30,41,59,0.7);
+            --surface-blur: blur(12px);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-light: #334155;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --user-bubble: #38bdf8;
+            --assistant-bubble: #1e293b;
+            --sidebar-bg: rgba(17,24,39,0.8);
+            --avatar-bg: #4b5563;
+            --hover-bg: rgba(45,58,79,0.7);
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+            --logo-gradient: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6, #38bdf8);
+        }
+        /* 极简主题 */
+        .theme-minimal {
+            --surface-color: #ffffff;
+            --surface-blur: none;
+            --border-light: transparent;
+            --shadow: 0 2px 10px rgba(0,0,0,0.03);
+            --sidebar-bg: #f8fafc;
+            --hover-bg: #f1f5f9;
+        }
+        .dark.theme-minimal {
+            --surface-color: #1e293b;
+            --sidebar-bg: #111827;
+            --hover-bg: #1e293b;
+            --border-light: #334155;
+        }
+
+        /* ----- 顶栏 ----- */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 20;
+            flex-shrink: 0;
+            backdrop-filter: var(--surface-blur);
+            flex-wrap: wrap;
+        }
+        .menu-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-primary);
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .menu-btn:hover { background: var(--hover-bg); }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .logo-wave {
+            font-size: 28px;
+            line-height: 1;
+            animation: waveEnter 0.6s ease-out forwards;
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--logo-gradient);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradientShift 4s linear infinite;
+        }
+        .tagline {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-left: 4px;
+            border-right: 2px solid var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            animation: typing 3s steps(20, end) forwards, blinkCursor 0.8s step-end infinite;
+        }
+        .current-model-badge {
+            background: var(--hover-bg);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-light);
+            cursor: default;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+        .spacer { flex: 1; }
+        
+        /* 动画定义 */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 170px; }
+        }
+        @keyframes blinkCursor {
+            50% { border-color: transparent; }
+        }
+        @keyframes waveEnter {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            60% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        @keyframes slideIn {
+            0% { opacity: 0; transform: translateX(20px) scale(0.9); }
+            60% { opacity: 1; transform: translateX(-2px) scale(1.02); }
+            100% { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 5px var(--accent); }
+            50% { box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent); }
+            100% { box-shadow: 0 0 5px var(--accent); }
+        }
+
+        /* ----- 侧边栏 ----- */
+        .sidebar {
+            position: fixed;
+            top: 0; left: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-light);
+            transition: left 0.25s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: var(--shadow);
+            backdrop-filter: var(--surface-blur);
+        }
+        .sidebar.open { left: 0; }
+        .backdrop {
+            position: fixed;
+            inset: 0; background: rgba(0,0,0,0.3);
+            z-index: 99; display: none;
+        }
+        .backdrop.show { display: block; }
+        
+        /* 个人中心区域 (昵称头像) */
+        .profile-area { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 0 20px 20px; 
+            border-bottom: 1px solid var(--border-light); 
+            margin-bottom: 16px; 
+            flex-shrink: 0; 
+        }
+        .avatar { 
+            width: 52px; 
+            height: 52px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 28px; 
+            color: white; 
+            flex-shrink: 0;
+            background-color: #3b82f6;
+            transition: transform 0.2s, background-color 0.2s;
+            user-select: none;
+            font-weight: 500;
+        }
+        .avatar:hover {
+            transform: scale(1.05);
+        }
+        .profile-input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .profile-input-area label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .profile-input-area input {
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            background: var(--surface-color);
+            color: var(--text-primary);
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .profile-input-area input:focus {
+            outline: 2px solid var(--accent);
+        }
+        
+        /* 天气区域 */
+        .weather-area {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .weather-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .weather-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            background: var(--surface-color);
+            color: var(--text-primary);
+        }
+        .weather-row button {
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+        }
+        .weather-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+        .weather-icon {
+            font-size: 2rem;
+        }
+        .weather-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .weather-city {
+            font-weight: 600;
+        }
+        .weather-temp {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* 记忆区域 */
+        .memory-area {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .memory-header {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .memory-input-row {
+            display: flex;
+            gap: 8px;
+        }
+        .memory-input-row input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-light);
+            background: var(--surface-color);
+            color: var(--text-primary);
+        }
+        .memory-input-row button {
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+        }
+        .memory-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .memory-item {
+            background: var(--surface-color);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            word-break: break-word;
+        }
+        .memory-text {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        .memory-delete {
+            opacity: 0.5;
+            font-size: 16px;
+            padding: 0 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .memory-delete:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+
+        .chat-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 0 12px; 
+        }
+        .chat-item { 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            margin-bottom: 6px; 
+            background: var(--surface-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+            backdrop-filter: var(--surface-blur); 
+        }
+        .chat-item.active { 
+            border-color: var(--accent); 
+            background: var(--hover-bg); 
+        }
+        .chat-delete {
+            opacity: 0.5;
+            font-size: 18px;
+            padding: 0 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .chat-delete:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+        .new-chat-btn { margin: 16px 12px; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+        .sidebar-footer { padding: 20px 16px 12px; border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+        .sidebar-btn { background: none; border: none; text-align: left; padding: 12px 16px; border-radius: 30px; color: var(--text-primary); font-size: 1rem; cursor: pointer; }
+        .sidebar-btn:hover { background: var(--hover-bg); }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px 10px 20px;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+            padding-bottom: 20px;
+        }
+        .message {
+            display: flex;
+            flex-direction: column;
+            animation: slideIn 0.3s ease-out;
+        }
+        .user-message { align-items: flex-end; }
+        .assistant-message { align-items: flex-start; }
+        .bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 24px;
+            background: var(--assistant-bubble);
+            border: 1px solid var(--border-light);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+        .user-message .bubble {
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+        .assistant-message .bubble {
+            border-bottom-left-radius: 6px;
+        }
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: var(--text-primary);
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blinkCursor 1s infinite;
+        }
+
+        /* 输入区 */
+        .input-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 900px;
+            margin: 10px auto 0;
+            width: 100%;
+            background: var(--surface-color);
+            padding: 16px 20px;
+            border-radius: 36px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow);
+            backdrop-filter: var(--surface-blur);
+            transition: box-shadow 0.2s;
+        }
+        .input-area:focus-within {
+            animation: glowPulse 2s infinite;
+        }
+        .quick-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 6px;
+            border-radius: 50%;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .quick-btn:hover { background: var(--hover-bg); }
+        .quick-panel {
+            position: absolute;
+            bottom: 70px;
+            left: 20px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            box-shadow: var(--shadow);
+            z-index: 50;
+            display: none;
+            backdrop-filter: var(--surface-blur);
+        }
+        .quick-panel.show { display: grid; }
+        .quick-panel button {
+            padding: 10px 12px;
+            border: none;
+            background: var(--hover-bg);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            color: var(--text-primary);
+        }
+        textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            resize: none;
+            padding: 8px 4px;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-primary);
+            max-height: 120px;
+            outline: none;
+        }
+        #sendBtn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        #sendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .rate-limit-bar {
+            max-width: 900px;
+            margin: 0 auto 8px;
+            width: 100%;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+
+        /* 模态框 */
+        .modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface-color);
+            width: 520px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 36px;
+            padding: 24px;
+            z-index: 200;
+            box-shadow: var(--shadow);
+            display: none;
+            border: 1px solid var(--border-light);
+            backdrop-filter: var(--surface-blur);
+        }
+        .modal.show { display: block; }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 16px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 0;
+        }
+        .tab-btn.active { color: var(--accent); font-weight: 600; }
+        .tab-pane { display: none; padding: 16px 0; }
+        .tab-pane.active { display: block; }
+        .setting-group { margin-bottom: 20px; }
+        .setting-group label { display: block; margin-bottom: 4px; font-weight: 500; }
+        .modal input, .modal select, .modal button {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 40px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-color);
+            color: var(--text-primary);
+            margin: 8px 0;
+        }
+        .save-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            width: auto;
+            padding: 10px 24px;
+        }
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .color-row input[type="color"] {
+            width: 60px;
+            height: 40px;
+            padding: 4px;
+        }
+        .onboarding-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 14px;
+            font-size: 1.2rem;
+            margin-top: 24px;
+            cursor: pointer;
+        }
+        /* 语言包按钮组 */
+        .lang-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .lang-buttons button {
+            flex: 1;
+        }
+        /* 格式提示 */
+        .format-hint {
+            background: var(--hover-bg);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin: 16px 0;
+            border-left: 4px solid var(--accent);
+        }
+        .format-hint code {
+            background: var(--surface-color);
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <div class="backdrop" id="backdrop"></div>
+    <aside class="sidebar" id="sidebar">
+        <!-- 个人中心区域 -->
+        <div class="profile-area">
+            <div class="avatar" id="avatar">👤</div>
+            <div class="profile-input-area">
+                <label for="nicknameInput" data-i18n="nickname_label">Your Name</label>
+                <input type="text" id="nicknameInput" placeholder="Enter your name" data-i18n-placeholder="nickname_placeholder" value="">
+            </div>
+        </div>
+
+        <!-- 天气区域 -->
+        <div class="weather-area">
+            <div class="weather-row">
+                <input type="text" id="cityInput" placeholder="Enter city" data-i18n-placeholder="weather_city_placeholder" value="北京">
+                <button id="weatherQueryBtn" data-i18n="weather_query_btn">Query</button>
+            </div>
+            <div class="weather-display" id="weatherDisplay">
+                <span class="weather-icon" id="weatherIcon">☀️</span>
+                <div class="weather-info">
+                    <span class="weather-city" id="weatherCity">Beijing</span>
+                    <span class="weather-temp" id="weatherTemp">29~15°C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记忆区域 -->
+        <div class="memory-area">
+            <div class="memory-header">
+                <span>📝</span>
+                <span data-i18n="memory_title">Memories</span>
+            </div>
+            <div class="memory-input-row">
+                <input type="text" id="memoryInput" placeholder="Write something..." data-i18n-placeholder="memory_input_placeholder">
+                <button id="memorySaveBtn" data-i18n="memory_save_btn">Save</button>
+            </div>
+            <div class="memory-list" id="memoryList"></div>
+        </div>
+
+        <div class="chat-list" id="chatList"></div>
+        <button class="new-chat-btn" id="newChatBtn" data-i18n="new_chat">+ New Chat</button>
+        <div class="sidebar-footer">
+            <button class="sidebar-btn" id="openSettingsBtn" data-i18n="settings">⚙️ Settings</button>
+            <button class="sidebar-btn" id="toggleThemeBtn" data-i18n="dark_mode">🌙 Dark mode</button>
+        </div>
+    </aside>
+
+    <!-- 顶栏 -->
+    <div class="top-bar">
+        <button class="menu-btn" id="menuToggle">☰</button>
+        <div class="logo-area">
+            <span class="logo-wave">✨</span>
+            <span class="logo-text" data-i18n="app_name">FlowTalk</span>
+            <span class="tagline" data-i18n="tagline">swift & smooth</span>
+        </div>
+        <span class="current-model-badge" id="currentModelDisplay" title="tencent/Hunyuan-MT-7B">Hunyuan-MT</span>
+    </div>
+
+    <!-- 主聊天区域 -->
+    <div class="main-content" id="mainContent">
+        <div class="rate-limit-bar" id="rateLimitInfo">
+            <span data-i18n="remaining">Remaining: 15/15</span>
+            <span id="coolDownTimer"></span>
+        </div>
+        <div class="messages" id="messagesContainer"></div>
+
+        <!-- 输入区 -->
+        <div style="position: relative; width: 100%; max-width: 900px; margin: 0 auto;">
+            <div class="quick-panel" id="quickPanel">
+                <button data-prompt="Translate the following to Chinese: " data-i18n="quick_translate">翻译成中文</button>
+                <button data-prompt="Summarize the following content: " data-i18n="quick_summarize">总结内容</button>
+                <button data-prompt="Explain this code: " data-i18n="quick_explain">解释代码</button>
+                <button data-prompt="Polish this text: " data-i18n="quick_polish">润色文字</button>
+                <button data-prompt="Help me with programming: " data-i18n="quick_program">编程帮助</button>
+                <button data-prompt="Debug this code: " data-i18n="quick_debug">调试代码</button>
+            </div>
+            <div class="input-area">
+                <button class="quick-btn" id="quickBtn">⚡</button>
+                <textarea id="userInput" rows="1" placeholder="Type a message..." data-i18n-placeholder="input_placeholder"></textarea>
+                <button id="sendBtn">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引导模态框 -->
+    <div class="modal" id="onboardingModal">
+        <div class="modal-header">
+            <h2 data-i18n="welcome_title">✨ Welcome to FlowTalk</h2>
+        </div>
+        <div style="padding: 10px 0;">
+            <p data-i18n="onboarding_step1">1️⃣ <strong>Get API Key</strong>: Click "Settings" → "API Key", go to <strong>硅基流动</strong> website to register and get a free token.</p>
+            <p data-i18n="onboarding_step2">2️⃣ <strong>Choose Model</strong>: Select your preferred model in Settings (e.g. Hunyuan-MT or DeepSeek-OCR).</p>
+            <p data-i18n="onboarding_step3">3️⃣ <strong>Start Chat</strong>: Type your question and enjoy fast responses.</p>
+        </div>
+        <button class="onboarding-btn" id="startUsingBtn" data-i18n="start_using">🚀 Start Using</button>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-header">
+            <h3 data-i18n="settings_title">Settings</h3>
+            <button class="menu-btn" id="closeModalBtn">✕</button>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="api" data-i18n="tab_api">API & Model</button>
+            <button class="tab-btn" data-tab="appearance" data-i18n="tab_appearance">Appearance & Behavior</button>
+            <button class="tab-btn" data-tab="language" data-i18n="tab_language">Language</button>
+            <button class="tab-btn" data-tab="data" data-i18n="tab_data">Data</button>
+        </div>
+        <!-- API & Model 面板 -->
+        <div class="tab-pane active" id="apiTab">
+            <div class="setting-group">
+                <label data-i18n="api_key_label">API Key (硅基流动 / SiliconFlow)</label>
+                <input type="password" id="apiKeyInput" placeholder="sk-..." value="">
+                <button class="save-btn" id="saveApiKeyBtn" data-i18n="save_key">Save Key</button>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="model_select">Select Model</label>
+                <select id="modelSelect"></select>
+                <p style="font-size:0.8rem;" data-i18n="model_hint">Hover over options to see full path</p>
+            </div>
+        </div>
+        <!-- 外观与行为面板 -->
+        <div class="tab-pane" id="appearanceTab">
+            <div class="setting-group">
+                <label data-i18n="ui_style">UI Style</label>
+                <select id="uiStyleSelect">
+                    <option value="default" data-i18n="style_default">Default (Frosted glass/Dark)</option>
+                    <option value="minimal" data-i18n="style_minimal">Minimal (Pure white/Borderless)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="response_mode">Response Mode</label>
+                <select id="responseModeSelect">
+                    <option value="stream" data-i18n="mode_stream">Streaming (word by word + cursor)</option>
+                    <option value="full" data-i18n="mode_full">Full response (display after completion)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="font_family">Font Family</label>
+                <select id="fontSelector">
+                    <option value="system-ui, -apple-system, sans-serif" data-i18n="font_system">System UI</option>
+                    <option value="Georgia, 'Times New Roman', serif" data-i18n="font_serif">Georgia / Serif</option>
+                    <option value="'Courier New', monospace" data-i18n="font_mono">Courier / Monospace</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="user_bubble_color">User Bubble Color</label>
+                <div class="color-row">
+                    <input type="color" id="userColorPicker" value="#3b82f6">
+                    <span data-i18n="preview">Preview</span>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="assistant_bubble_color">Assistant Bubble Color</label>
+                <div class="color-row">
+                    <input type="color" id="assistantColorPicker" value="#ffffff">
+                    <span data-i18n="preview">Preview</span>
+                </div>
+            </div>
+            <button class="save-btn" id="saveAppearanceBtn" data-i18n="save_appearance">Save Appearance Settings</button>
+        </div>
+        <!-- 语言包面板 -->
+        <div class="tab-pane" id="languageTab">
+            <div class="setting-group">
+                <label data-i18n="import_lang">Import Language Pack (TXT format)</label>
+                <div class="format-hint">
+                    <strong>📄 Format:</strong><br>
+                    - One line: <code>key=value</code><br>
+                    - Lines starting with <code>#</code> are ignored<br>
+                    - Example:<br>
+                    <code>app_name=My App</code><br>
+                    <code># This is a comment</code>
+                </div>
+                <input type="file" id="langFileInput" accept=".txt">
+                <button class="save-btn" id="importLangBtn" data-i18n="import_btn">Import & Replace</button>
+            </div>
+            <div class="setting-group">
+                <label data-i18n="export_lang">Export Current Language Pack as TXT</label>
+                <button class="save-btn" id="exportLangBtn" data-i18n="export_btn">Export Language Pack</button>
+            </div>
+            <p style="font-size:0.8rem;" data-i18n="lang_hint">Interface text will update immediately after import</p>
+        </div>
+        <!-- 数据面板 -->
+        <div class="tab-pane" id="dataTab">
+            <div class="stat-row"><span data-i18n="total_chats">Total Chats</span> <span id="statTotalChats">0</span></div>
+            <div class="stat-row"><span data-i18n="total_msgs">Total Messages</span> <span id="statTotalMsgs">0</span></div>
+            <div class="stat-row"><span data-i18n="today_msgs">Today's Messages</span> <span id="statTodayMsgs">0</span></div>
+            <div class="stat-row"><span data-i18n="total_words">Total Words</span> <span id="statTotalWords">0</span></div>
+            <div class="export-buttons">
+                <button id="exportMarkdown" data-i18n="export_md">Markdown</button>
+                <button id="exportJson" data-i18n="export_json">JSON Backup</button>
+                <button id="exportTxt" data-i18n="export_txt">TXT</button>
+                <button id="clearAll" class="danger-btn" data-i18n="clear_all">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            // ---------- 默认英文语言包 (包含新增键) ----------
+            const DEFAULT_LANG_PACK = {
+                // 通用
+                'app_name': 'FlowTalk',
+                'tagline': 'swift & smooth',
+                'new_chat': '+ New Chat',
+                'settings': '⚙️ Settings',
+                'dark_mode': '🌙 Dark mode',
+                'remaining': 'Remaining: 15/15',
+                'input_placeholder': 'Type a message...',
+                // 引导
+                'welcome_title': '✨ Welcome to FlowTalk',
+                'onboarding_step1': '1️⃣ <strong>Get API Key</strong>: Click "Settings" → "API Key", go to <strong>硅基流动</strong> website to register and get a free token.',
+                'onboarding_step2': '2️⃣ <strong>Choose Model</strong>: Select your preferred model in Settings (e.g. Hunyuan-MT or DeepSeek-OCR).',
+                'onboarding_step3': '3️⃣ <strong>Start Chat</strong>: Type your question and enjoy fast responses.',
+                'start_using': '🚀 Start Using',
+                // 设置模态框
+                'settings_title': 'Settings',
+                'tab_api': 'API & Model',
+                'tab_appearance': 'Appearance & Behavior',
+                'tab_language': 'Language',
+                'tab_data': 'Data',
+                'api_key_label': 'API Key (硅基流动 / SiliconFlow)',
+                'save_key': 'Save Key',
+                'model_select': 'Select Model',
+                'model_hint': 'Hover over options to see full path',
+                'ui_style': 'UI Style',
+                'style_default': 'Default (Frosted glass/Dark)',
+                'style_minimal': 'Minimal (Pure white/Borderless)',
+                'response_mode': 'Response Mode',
+                'mode_stream': 'Streaming (word by word + cursor)',
+                'mode_full': 'Full response (display after completion)',
+                'font_family': 'Font Family',
+                'font_system': 'System UI',
+                'font_serif': 'Georgia / Serif',
+                'font_mono': 'Courier / Monospace',
+                'user_bubble_color': 'User Bubble Color',
+                'assistant_bubble_color': 'Assistant Bubble Color',
+                'preview': 'Preview',
+                'save_appearance': 'Save Appearance Settings',
+                'import_lang': 'Import Language Pack (TXT format)',
+                'import_btn': 'Import & Replace',
+                'export_lang': 'Export Current Language Pack as TXT',
+                'export_btn': 'Export Language Pack',
+                'lang_hint': 'Interface text will update immediately after import',
+                'total_chats': 'Total Chats',
+                'total_msgs': 'Total Messages',
+                'today_msgs': 'Today\'s Messages',
+                'total_words': 'Total Words',
+                'export_md': 'Markdown',
+                'export_json': 'JSON Backup',
+                'export_txt': 'TXT',
+                'clear_all': 'Clear All',
+                // 快捷面板按钮
+                'quick_translate': 'Translate to Chinese',
+                'quick_summarize': 'Summarize',
+                'quick_explain': 'Explain Code',
+                'quick_polish': 'Polish Text',
+                'quick_program': 'Programming Help',
+                'quick_debug': 'Debug Code',
+                // 天气相关
+                'weather_city_placeholder': 'Enter city',
+                'weather_query_btn': 'Query',
+                'weather_error': 'Weather unavailable',
+                // 记忆相关
+                'memory_title': 'Memories',
+                'memory_input_placeholder': 'Write something...',
+                'memory_save_btn': 'Save',
+                'memory_delete_confirm': 'Delete this memory?',
+                // 个人中心新键
+                'nickname_label': 'Your Name',
+                'nickname_placeholder': 'Enter your name',
+                // 冷却提示
+                'cooldown_alert': 'Current cooling time, please wait {time} before trying again.'
+            };
+
+            // 当前语言包
+            let currentLangPack = { ...DEFAULT_LANG_PACK };
+            try {
+                const saved = localStorage.getItem('customLangPack');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    currentLangPack = { ...DEFAULT_LANG_PACK, ...parsed };
+                }
+            } catch (e) {}
+
+            // 应用国际化
+            function applyI18n() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (currentLangPack[key]) {
+                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+                            // do nothing
+                        } else {
+                            el.innerText = currentLangPack[key];
+                        }
+                    }
+                });
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (currentLangPack[key]) {
+                        el.placeholder = currentLangPack[key];
+                    }
+                });
+                document.querySelectorAll('option[data-i18n]').forEach(opt => {
+                    const key = opt.getAttribute('data-i18n');
+                    if (currentLangPack[key]) {
+                        opt.textContent = currentLangPack[key];
+                    }
+                });
+            }
+
+            // ---------- 模型常量 ----------
+            const MODEL_MAP = {
+                'Hunyuan-MT': 'tencent/Hunyuan-MT-7B',
+                'DeepSeek-OCR': 'deepseek-ai/DeepSeek-OCR'
+            };
+            const MODEL_SHORTS = Object.keys(MODEL_MAP);
+
+            // ---------- 存储键 ----------
+            const STORAGE_KEYS = {
+                CHATS: 'flowtalk_chats',
+                API_KEY: 'apiKey',
+                SELECTED_MODEL: 'selectedModel',
+                FONT: 'userFont',
+                DARK_MODE: 'darkMode',
+                UI_STYLE: 'uiStyle',
+                RESPONSE_MODE: 'responseMode',
+                USER_COLOR: 'userBubbleColor',
+                ASSISTANT_COLOR: 'assistantBubbleColor',
+                ONBOARDED: 'onboarded',
+                CUSTOM_LANG: 'customLangPack',
+                LAST_CITY: 'lastCity',
+                NICKNAME: 'nickname'
+            };
+
+            // ---------- 全局变量 ----------
+            let chats = [];
+            let currentChatId = null;
+            let apiKey = localStorage.getItem(STORAGE_KEYS.API_KEY) || '';
+            let fontFamily = localStorage.getItem(STORAGE_KEYS.FONT) || 'system-ui, -apple-system, sans-serif';
+            let darkMode = localStorage.getItem(STORAGE_KEYS.DARK_MODE) === 'true';
+            let uiStyle = localStorage.getItem(STORAGE_KEYS.UI_STYLE) || 'default';
+            let responseMode = localStorage.getItem(STORAGE_KEYS.RESPONSE_MODE) || 'stream';
+            let userBubbleColor = localStorage.getItem(STORAGE_KEYS.USER_COLOR) || '#3b82f6';
+            let assistantBubbleColor = localStorage.getItem(STORAGE_KEYS.ASSISTANT_COLOR) || '#ffffff';
+            let currentModel = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || MODEL_MAP['Hunyuan-MT'];
+            if (!Object.values(MODEL_MAP).includes(currentModel)) {
+                currentModel = MODEL_MAP['Hunyuan-MT'];
+            }
+            let nickname = localStorage.getItem(STORAGE_KEYS.NICKNAME) || '';
+
+            // 频率限制数据
+            let messageCount = parseInt(localStorage.getItem('msgCount') || '0');
+            let lastHour = parseInt(localStorage.getItem('lastHour') || '0');
+            let coolingStart = parseInt(localStorage.getItem('coolingStart') || '0');
+
+            // 记忆数据
+            let memories = [];
+            try {
+                const savedMemories = localStorage.getItem('memories');
+                if (savedMemories) {
+                    memories = JSON.parse(savedMemories);
+                }
+            } catch (e) {
+                memories = [];
+            }
+
+            // ---------- DOM 元素 ----------
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('backdrop');
+            const menuToggle = document.getElementById('menuToggle');
+            const currentModelDisplay = document.getElementById('currentModelDisplay');
+            const messagesContainer = document.getElementById('messagesContainer');
+            const userInput = document.getElementById('userInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const quickBtn = document.getElementById('quickBtn');
+            const quickPanel = document.getElementById('quickPanel');
+            const rateLimitInfo = document.getElementById('rateLimitInfo');
+            const coolDownTimer = document.getElementById('coolDownTimer');
+            const settingsModal = document.getElementById('settingsModal');
+            const onboardingModal = document.getElementById('onboardingModal');
+            const openSettingsBtn = document.getElementById('openSettingsBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const startUsingBtn = document.getElementById('startUsingBtn');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+            const modelSelect = document.getElementById('modelSelect');
+            const fontSelector = document.getElementById('fontSelector');
+            const uiStyleSelect = document.getElementById('uiStyleSelect');
+            const responseModeSelect = document.getElementById('responseModeSelect');
+            const userColorPicker = document.getElementById('userColorPicker');
+            const assistantColorPicker = document.getElementById('assistantColorPicker');
+            const saveAppearanceBtn = document.getElementById('saveAppearanceBtn');
+            const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const chatListDiv = document.getElementById('chatList');
+            const statTotalChats = document.getElementById('statTotalChats');
+            const statTotalMsgs = document.getElementById('statTotalMsgs');
+            const statTodayMsgs = document.getElementById('statTodayMsgs');
+            const statTotalWords = document.getElementById('statTotalWords');
+
+            // 语言包相关
+            const langFileInput = document.getElementById('langFileInput');
+            const importLangBtn = document.getElementById('importLangBtn');
+            const exportLangBtn = document.getElementById('exportLangBtn');
+
+            // 天气相关
+            const cityInput = document.getElementById('cityInput');
+            const weatherQueryBtn = document.getElementById('weatherQueryBtn');
+            const weatherIcon = document.getElementById('weatherIcon');
+            const weatherCity = document.getElementById('weatherCity');
+            const weatherTemp = document.getElementById('weatherTemp');
+
+            // 记忆相关
+            const memoryInput = document.getElementById('memoryInput');
+            const memorySaveBtn = document.getElementById('memorySaveBtn');
+            const memoryList = document.getElementById('memoryList');
+
+            // 个人中心相关
+            const avatar = document.getElementById('avatar');
+            const nicknameInput = document.getElementById('nicknameInput');
+
+            // ---------- 初始化样式 ----------
+            function applyUIStyle() {
+                document.body.classList.remove('theme-minimal');
+                if (uiStyle === 'minimal') {
+                    document.body.classList.add('theme-minimal');
+                }
+            }
+            function applyBubbleColors() {
+                document.documentElement.style.setProperty('--user-bubble', userBubbleColor);
+                document.documentElement.style.setProperty('--assistant-bubble', assistantBubbleColor);
+            }
+            function applyFont() {
+                document.body.style.fontFamily = fontFamily;
+                fontSelector.value = fontFamily;
+            }
+            function applyTheme() {
+                if (darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            }
+            applyUIStyle();
+            applyBubbleColors();
+            applyFont();
+            applyTheme();
+
+            // 填充模型下拉
+            function populateModelSelect() {
+                modelSelect.innerHTML = '';
+                MODEL_SHORTS.forEach(short => {
+                    const full = MODEL_MAP[short];
+                    const option = document.createElement('option');
+                    option.value = full;
+                    option.textContent = short;
+                    option.title = full;
+                    if (full === currentModel) option.selected = true;
+                    modelSelect.appendChild(option);
+                });
+            }
+            populateModelSelect();
+
+            // 更新顶部模型显示
+            function updateModelDisplay() {
+                const short = Object.keys(MODEL_MAP).find(key => MODEL_MAP[key] === currentModel) || 'Hunyuan-MT';
+                currentModelDisplay.textContent = short;
+                currentModelDisplay.title = currentModel;
+            }
+            updateModelDisplay();
+
+            // ---------- 头像生成器 ----------
+            function stringToHue(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return Math.abs(hash % 360);
+            }
+
+            function updateAvatar() {
+                let name = nickname.trim();
+                let letter = '?';
+                if (name) {
+                    const firstChar = name.charAt(0);
+                    if (/[a-zA-Z]/.test(firstChar)) {
+                        letter = firstChar.toUpperCase();
+                    } else {
+                        letter = firstChar;
+                    }
+                } else {
+                    letter = '?';
+                }
+                avatar.innerText = letter;
+                const hue = name ? stringToHue(name) : 200;
+                const bgColor = `hsl(${hue}, 70%, 60%)`;
+                avatar.style.backgroundColor = bgColor;
+            }
+
+            nicknameInput.value = nickname;
+            updateAvatar();
+
+            nicknameInput.addEventListener('input', (e) => {
+                nickname = e.target.value;
+                localStorage.setItem(STORAGE_KEYS.NICKNAME, nickname);
+                updateAvatar();
+            });
+
+            // ---------- 记忆功能 ----------
+            function saveMemories() {
+                localStorage.setItem('memories', JSON.stringify(memories));
+            }
+
+            function renderMemories() {
+                memoryList.innerHTML = '';
+                memories.forEach((mem, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'memory-item';
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'memory-text';
+                    textSpan.innerText = mem;
+                    
+                    const delSpan = document.createElement('span');
+                    delSpan.className = 'memory-delete';
+                    delSpan.innerHTML = '✕';
+                    delSpan.addEventListener('click', () => {
+                        if (confirm(currentLangPack['memory_delete_confirm'] || 'Delete this memory?')) {
+                            memories.splice(index, 1);
+                            saveMemories();
+                            renderMemories();
+                        }
+                    });
+                    
+                    item.appendChild(textSpan);
+                    item.appendChild(delSpan);
+                    memoryList.appendChild(item);
+                });
+            }
+
+            memorySaveBtn.addEventListener('click', () => {
+                const text = memoryInput.value.trim();
+                if (text) {
+                    memories.push(text);
+                    saveMemories();
+                    renderMemories();
+                    memoryInput.value = '';
+                }
+            });
+
+            memoryInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    memorySaveBtn.click();
+                }
+            });
+
+            renderMemories();
+
+            // ---------- 加载对话 ----------
+            function loadFromStorage() {
+                const stored = localStorage.getItem(STORAGE_KEYS.CHATS);
+                if (stored) {
+                    try { chats = JSON.parse(stored); } catch(e){ chats = []; }
+                }
+                if (!chats.length) {
+                    const id = Date.now().toString();
+                    chats.push({ id, name: 'New chat', messages: [], createdAt: Date.now() });
+                }
+                if (!currentChatId || !chats.find(c => c.id === currentChatId)) {
+                    currentChatId = chats[0].id;
+                }
+                renderChatList();
+                renderMessages();
+                updateStats();
+            }
+            function saveChats() {
+                localStorage.setItem(STORAGE_KEYS.CHATS, JSON.stringify(chats));
+            }
+
+            function renderChatList() {
+                chatListDiv.innerHTML = '';
+                chats.forEach(chat => {
+                    const div = document.createElement('div');
+                    div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+                    div.dataset.id = chat.id;
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.innerText = chat.name || '对话';
+                    
+                    const deleteSpan = document.createElement('span');
+                    deleteSpan.className = 'chat-delete';
+                    deleteSpan.innerHTML = '✕';
+                    deleteSpan.title = '删除对话';
+                    
+                    deleteSpan.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('确定要删除这个对话吗？')) {
+                            const index = chats.findIndex(c => c.id === chat.id);
+                            if (index !== -1) {
+                                chats.splice(index, 1);
+                                if (currentChatId === chat.id) {
+                                    currentChatId = chats.length > 0 ? chats[0].id : null;
+                                }
+                                saveChats();
+                                renderChatList();
+                                renderMessages();
+                                updateStats();
+                            }
+                        }
+                    });
+                    
+                    div.appendChild(nameSpan);
+                    div.appendChild(deleteSpan);
+                    
+                    div.addEventListener('click', (e) => {
+                        currentChatId = chat.id;
+                        renderChatList();
+                        renderMessages();
+                    });
+                    
+                    chatListDiv.appendChild(div);
+                });
+            }
+
+            function renderMessages() {
+                const chat = chats.find(c => c.id === currentChatId);
+                if (!chat) {
+                    messagesContainer.innerHTML = '';
+                    return;
+                }
+                messagesContainer.innerHTML = '';
+                chat.messages.forEach(msg => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`;
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.innerText = msg.content;
+                    msgDiv.appendChild(bubble);
+                    messagesContainer.appendChild(msgDiv);
+                });
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            function updateStats() {
+                const totalChats = chats.length;
+                let totalMsgs = 0, todayMsgs = 0, totalWords = 0;
+                const today = new Date().setHours(0,0,0,0);
+                chats.forEach(chat => {
+                    chat.messages.forEach(m => {
+                        totalMsgs++;
+                        totalWords += (m.content || '').length;
+                        if (m.timestamp && m.timestamp >= today) todayMsgs++;
+                    });
+                });
+                statTotalChats.innerText = totalChats;
+                statTotalMsgs.innerText = totalMsgs;
+                statTodayMsgs.innerText = todayMsgs;
+                statTotalWords.innerText = totalWords;
+            }
+
+            // 频率检查
+            function checkRateLimit() {
+                const now = Date.now();
+                if (coolingStart > 0) {
+                    const coolElapsed = (now - coolingStart) / 1000 / 60;
+                    if (coolElapsed < 10) {
+                        const remainMin = Math.ceil(10 - coolElapsed);
+                        coolDownTimer.innerText = `⏳冷却中 ${remainMin}分钟`;
+                        sendBtn.disabled = true;
+                        return false;
+                    } else {
+                        coolingStart = 0;
+                        messageCount = 0;
+                        lastHour = now;
+                        localStorage.setItem('coolingStart', '0');
+                        localStorage.setItem('msgCount', '0');
+                        localStorage.setItem('lastHour', now.toString());
+                    }
+                }
+                if (lastHour === 0) {
+                    lastHour = now;
+                    messageCount = 0;
+                } else if (now - lastHour > 60 * 60 * 1000) {
+                    lastHour = now;
+                    messageCount = 0;
+                }
+                if (messageCount >= 15) {
+                    coolingStart = now;
+                    localStorage.setItem('coolingStart', now.toString());
+                    sendBtn.disabled = true;
+                    coolDownTimer.innerText = '⏳触发冷却 10分钟';
+                    return false;
+                }
+                const remaining = 15 - messageCount;
+                rateLimitInfo.firstElementChild.innerText = `剩余次数: ${remaining}/15`;
+                sendBtn.disabled = false;
+                return true;
+            }
+
+            function incrementCount() {
+                messageCount++;
+                localStorage.setItem('msgCount', messageCount.toString());
+                localStorage.setItem('lastHour', lastHour.toString());
+                checkRateLimit();
+            }
+
+            // ---------- 天气功能 ----------
+            function weatherCodeToIcon(code) {
+                if (code === 0) return '☀️';
+                if (code === 1 || code === 2 || code === 3) return '⛅';
+                if (code === 45 || code === 48) return '🌫️';
+                if (code >= 51 && code <= 67) return '🌧️';
+                if (code >= 71 && code <= 77) return '❄️';
+                if (code >= 80 && code <= 82) return '🌦️';
+                if (code >= 95 && code <= 99) return '⛈️';
+                return '☀️';
+            }
+
+            async function fetchWeather(city) {
+                if (!city) return;
+                try {
+                    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`;
+                    const geoRes = await fetch(geoUrl);
+                    if (!geoRes.ok) throw new Error('Geocoding failed');
+                    const geoData = await geoRes.json();
+                    if (!geoData.results || geoData.results.length === 0) {
+                        throw new Error('City not found');
+                    }
+                    const { latitude, longitude, name } = geoData.results[0];
+                    
+                    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=1`;
+                    const weatherRes = await fetch(weatherUrl);
+                    if (!weatherRes.ok) throw new Error('Weather fetch failed');
+                    const weatherData = await weatherRes.json();
+                    
+                    const maxTemp = weatherData.daily.temperature_2m_max[0];
+                    const minTemp = weatherData.daily.temperature_2m_min[0];
+                    const weatherCode = weatherData.daily.weathercode[0];
+                    
+                    weatherIcon.innerText = weatherCodeToIcon(weatherCode);
+                    weatherCity.innerText = name;
+                    weatherTemp.innerText = `${Math.round(maxTemp)}~${Math.round(minTemp)}°C`;
+                    
+                    localStorage.setItem(STORAGE_KEYS.LAST_CITY, city);
+                } catch (error) {
+                    console.error('Weather error:', error);
+                    weatherIcon.innerText = '❓';
+                    weatherTemp.innerText = currentLangPack['weather_error'] || 'Weather unavailable';
+                }
+            }
+
+            const lastCity = localStorage.getItem(STORAGE_KEYS.LAST_CITY) || '北京';
+            cityInput.value = lastCity;
+            fetchWeather(lastCity);
+
+            weatherQueryBtn.addEventListener('click', () => {
+                const city = cityInput.value.trim();
+                if (city) {
+                    fetchWeather(city);
+                }
+            });
+
+            cityInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const city = cityInput.value.trim();
+                    if (city) {
+                        fetchWeather(city);
+                    }
+                }
+            });
+
+            // ---------- 流式请求 (适配硅基流动) ----------
+            async function sendMessage(content) {
+                // 先检查频率限制，如果冷却中则提示并返回
+                if (!checkRateLimit()) {
+                    // 获取当前冷却提示文本
+                    const coolMsg = coolDownTimer.innerText || '冷却中';
+                    alert(`当前处于冷却状态，请等待 ${coolMsg} 后再试。`);
+                    return;
+                }
+
+                const chat = chats.find(c => c.id === currentChatId);
+                if (!chat) return;
+
+                const userMsg = { role: 'user', content, timestamp: Date.now() };
+                chat.messages.push(userMsg);
+                saveChats(); renderMessages(); updateStats();
+
+                if (responseMode === 'stream') {
+                    var assistantMsg = { role: 'assistant', content: '', timestamp: Date.now() };
+                    chat.messages.push(assistantMsg);
+                    renderMessages();
+                }
+
+                const key = apiKey;
+                if (!key) { alert('请先在设置中保存API Key'); return; }
+
+                const modelFull = currentModel;
+                const url = 'https://api.siliconflow.cn/v1/chat/completions';
+                const headers = {
+                    'Authorization': `Bearer ${key}`,
+                    'Content-Type': 'application/json',
+                };
+                const messagesForAPI = chat.messages.filter(m => m.role !== 'assistant' || m.content !== '').map(m => ({ role: m.role, content: m.content }));
+                const body = {
+                    model: modelFull,
+                    messages: messagesForAPI,
+                    stream: responseMode === 'stream' ? true : false
+                };
+
+                try {
+                    if (responseMode === 'stream') {
+                        const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder('utf-8');
+                        let done = false;
+                        let buffer = '';
+                        const msgIndex = chat.messages.length - 1;
+                        while (!done) {
+                            const { value, done: readerDone } = await reader.read();
+                            done = readerDone;
+                            buffer += decoder.decode(value, { stream: true });
+                            const lines = buffer.split('\n');
+                            buffer = lines.pop() || '';
+                            for (const line of lines) {
+                                if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                                    try {
+                                        const json = JSON.parse(line.substring(6));
+                                        const delta = json.choices[0].delta.content;
+                                        if (delta) {
+                                            chat.messages[msgIndex].content += delta;
+                                            renderMessages();
+                                        }
+                                    } catch (e) {}
+                                }
+                            }
+                        }
+                        incrementCount();
+                    } else {
+                        const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...body, stream: false }) });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        const fullContent = data.choices[0].message.content;
+                        const assistantMsgFull = { role: 'assistant', content: fullContent, timestamp: Date.now() };
+                        chat.messages.push(assistantMsgFull);
+                        renderMessages();
+                        incrementCount();
+                    }
+                    saveChats(); updateStats();
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    if (responseMode === 'stream') {
+                        chat.messages[chat.messages.length - 1].content = `[Error] ${error.message}`;
+                    } else {
+                        chat.messages.push({ role: 'assistant', content: `[Error] ${error.message}`, timestamp: Date.now() });
+                    }
+                    renderMessages();
+                }
+            }
+
+            // ---------- 事件绑定 ----------
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                backdrop.classList.add('show');
+            });
+            backdrop.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('show');
+            });
+            openSettingsBtn.addEventListener('click', () => {
+                settingsModal.classList.add('show');
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('show');
+                apiKeyInput.value = apiKey;
+                uiStyleSelect.value = uiStyle;
+                responseModeSelect.value = responseMode;
+                userColorPicker.value = userBubbleColor;
+                assistantColorPicker.value = assistantBubbleColor;
+            });
+            closeModalBtn.addEventListener('click', () => settingsModal.classList.remove('show'));
+
+            saveApiKeyBtn.addEventListener('click', () => {
+                apiKey = apiKeyInput.value.trim();
+                localStorage.setItem(STORAGE_KEYS.API_KEY, apiKey);
+                alert('API Key saved');
+            });
+
+            modelSelect.addEventListener('change', (e) => {
+                currentModel = e.target.value;
+                localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, currentModel);
+                updateModelDisplay();
+            });
+
+            saveAppearanceBtn.addEventListener('click', () => {
+                uiStyle = uiStyleSelect.value;
+                responseMode = responseModeSelect.value;
+                userBubbleColor = userColorPicker.value;
+                assistantBubbleColor = assistantColorPicker.value;
+                fontFamily = fontSelector.value;
+
+                localStorage.setItem(STORAGE_KEYS.UI_STYLE, uiStyle);
+                localStorage.setItem(STORAGE_KEYS.RESPONSE_MODE, responseMode);
+                localStorage.setItem(STORAGE_KEYS.USER_COLOR, userBubbleColor);
+                localStorage.setItem(STORAGE_KEYS.ASSISTANT_COLOR, assistantBubbleColor);
+                localStorage.setItem(STORAGE_KEYS.FONT, fontFamily);
+
+                applyUIStyle();
+                applyBubbleColors();
+                applyFont();
+                alert('Appearance settings saved');
+            });
+
+            fontSelector.addEventListener('change', (e) => {
+                document.body.style.fontFamily = e.target.value;
+            });
+
+            toggleThemeBtn.addEventListener('click', () => {
+                darkMode = !darkMode;
+                document.documentElement.classList.toggle('dark', darkMode);
+                localStorage.setItem(STORAGE_KEYS.DARK_MODE, darkMode);
+            });
+
+            quickBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                quickPanel.classList.toggle('show');
+            });
+            document.addEventListener('click', () => quickPanel.classList.remove('show'));
+            quickPanel.addEventListener('click', (e) => e.stopPropagation());
+            quickPanel.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const prompt = btn.dataset.prompt;
+                    userInput.value = prompt + (userInput.value);
+                    userInput.focus();
+                    quickPanel.classList.remove('show');
+                });
+            });
+
+            sendBtn.addEventListener('click', () => {
+                const text = userInput.value.trim();
+                if (!text) return;
+                userInput.value = '';
+                sendMessage(text);
+            });
+
+            newChatBtn.addEventListener('click', () => {
+                const id = Date.now().toString();
+                chats.push({ id, name: 'New chat', messages: [], createdAt: Date.now() });
+                currentChatId = id;
+                saveChats();
+                renderChatList();
+                renderMessages();
+                updateStats();
+            });
+
+            // 导出功能
+            document.getElementById('exportMarkdown').addEventListener('click', () => {
+                const chat = chats.find(c => c.id === currentChatId);
+                if (!chat) return;
+                let md = '';
+                chat.messages.forEach(m => md += `**${m.role}:**\n${m.content}\n\n`);
+                downloadFile('chat.md', md);
+            });
+            document.getElementById('exportJson').addEventListener('click', () => {
+                const backup = { chats, apiKey, settings: { fontFamily, darkMode, uiStyle, responseMode, userBubbleColor, assistantBubbleColor, selectedModel: currentModel } };
+                downloadFile('flowtalk_backup.json', JSON.stringify(backup, null, 2));
+            });
+            document.getElementById('exportTxt').addEventListener('click', () => {
+                const chat = chats.find(c => c.id === currentChatId);
+                let txt = '';
+                chat.messages.forEach(m => txt += `${m.role}: ${m.content}\n\n`);
+                downloadFile('chat.txt', txt);
+            });
+            document.getElementById('clearAll').addEventListener('click', () => {
+                if (confirm('Clear all data?')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            });
+            function downloadFile(name, content) {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = name;
+                a.click();
+            }
+
+            // 选项卡切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+                });
+            });
+
+            // 引导系统
+            if (!localStorage.getItem(STORAGE_KEYS.ONBOARDED)) {
+                onboardingModal.classList.add('show');
+            }
+            startUsingBtn.addEventListener('click', () => {
+                onboardingModal.classList.remove('show');
+                localStorage.setItem(STORAGE_KEYS.ONBOARDED, 'true');
+            });
+
+            // 语言包导入/导出
+            importLangBtn.addEventListener('click', () => {
+                const file = langFileInput.files[0];
+                if (!file) {
+                    alert('请先选择文件');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    const lines = content.split(/\r?\n/);
+                    const newPack = {};
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (line && !line.startsWith('#')) {
+                            const eqIndex = line.indexOf('=');
+                            if (eqIndex > 0) {
+                                const key = line.substring(0, eqIndex).trim();
+                                const value = line.substring(eqIndex + 1).trim();
+                                if (key) newPack[key] = value;
+                            }
+                        }
+                    });
+                    currentLangPack = { ...DEFAULT_LANG_PACK, ...newPack };
+                    localStorage.setItem(STORAGE_KEYS.CUSTOM_LANG, JSON.stringify(newPack));
+                    applyI18n();
+                    alert('语言包已导入并应用');
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+
+            exportLangBtn.addEventListener('click', () => {
+                const lines = [];
+                for (const [key, value] of Object.entries(currentLangPack)) {
+                    lines.push(`${key}=${value}`);
+                }
+                const content = lines.join('\n');
+                downloadFile('language_pack.txt', content);
+            });
+
+            // 初始化应用国际化
+            applyI18n();
+
+            // 初始化
+            loadFromStorage();
+            checkRateLimit();
+            setInterval(checkRateLimit, 1000);
+        })();
+    </script>
+</body>
+</html>
