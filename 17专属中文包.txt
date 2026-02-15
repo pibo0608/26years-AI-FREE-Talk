@@ -1,0 +1,80 @@
+# FlowTalk 中文语言包 (完整版)
+# 格式：key=value
+# 以 # 开头的行是注释，不会被导入
+
+# 通用
+app_name=流语聊
+tagline=流畅顺滑
+new_chat=+ 新建对话
+settings=⚙️ 设置
+dark_mode=🌙 暗色模式
+remaining=剩余次数: 15/15
+input_placeholder=输入消息...
+
+# 引导
+welcome_title=✨ 欢迎使用 FlowTalk
+onboarding_step1=1️⃣ <strong>获取API密钥</strong>：点击“设置”→“API密钥”，前往 <strong>硅基流动</strong> 官网注册并获取免费令牌。
+onboarding_step2=2️⃣ <strong>选择模型</strong>：在设置中选择你喜欢的模型（如 Hunyuan-MT 或 DeepSeek-OCR）。
+onboarding_step3=3️⃣ <strong>开始对话</strong>：输入你的问题，享受极速响应。
+start_using=🚀 开始使用
+
+# 设置模态框
+settings_title=设置
+tab_api=API & 模型
+tab_appearance=外观与行为
+tab_language=语言
+tab_data=数据
+api_key_label=API 密钥 (硅基流动)
+save_key=保存密钥
+model_select=选择模型
+model_hint=悬停选项可查看完整路径
+ui_style=界面风格
+style_default=默认 (毛玻璃/暗色)
+style_minimal=极简 (纯白/无边框)
+response_mode=回复方式
+mode_stream=流式 (逐字显示+光标)
+mode_full=整段 (完成后显示)
+font_family=字体
+font_system=系统默认
+font_serif=衬线字体
+font_mono=等宽字体
+user_bubble_color=用户气泡颜色
+assistant_bubble_color=助手气泡颜色
+preview=预览
+save_appearance=保存外观设置
+import_lang=导入语言包 (TXT格式)
+import_btn=导入并替换
+export_lang=导出当前语言包为TXT
+export_btn=导出语言包
+lang_hint=导入后界面文本将立即更新
+total_chats=总对话数
+total_msgs=总消息数
+today_msgs=今日消息数
+total_words=总字数
+export_md=Markdown
+export_json=JSON备份
+export_txt=TXT
+clear_all=清空全部
+
+# 快捷面板按钮
+quick_translate=翻译成中文
+quick_summarize=总结内容
+quick_explain=解释代码
+quick_polish=润色文字
+quick_program=编程帮助
+quick_debug=调试代码
+
+# 天气相关
+weather_city_placeholder=输入城市
+weather_query_btn=查询
+weather_error=天气获取失败
+
+# 记忆相关
+memory_title=我的记忆
+memory_input_placeholder=写下一些东西...
+memory_save_btn=保存
+memory_delete_confirm=要删除这条记忆吗？
+
+# 个人中心 (昵称/头像)
+nickname_label=你的名字
+nickname_placeholder=输入你的昵称
